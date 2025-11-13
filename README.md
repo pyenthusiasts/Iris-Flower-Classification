@@ -4,30 +4,56 @@
 [![Python Version](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A comprehensive, production-ready machine learning package for classifying iris flowers using multiple algorithms with detailed analysis and visualization capabilities.
+A comprehensive, **production-ready** machine learning package for classifying iris flowers using multiple algorithms with detailed analysis, visualization, and enterprise-grade deployment capabilities.
 
 ## Features
 
+### Core ML Capabilities
 - **Multiple ML Algorithms**: 8 different classification algorithms including Decision Trees, Random Forest, SVM, KNN, and Neural Networks
 - **Comprehensive Evaluation**: Detailed metrics including accuracy, precision, recall, F1-score, and ROC-AUC
 - **Data Visualization**: Rich visualizations for EDA, model comparison, and result analysis
-- **Command-Line Interface**: Easy-to-use CLI for training, evaluation, and prediction
-- **Python API**: Clean, well-documented API for programmatic access
+- **Batch Processing**: Efficient batch prediction support
+
+### Interfaces
+- **REST API**: Production-grade FastAPI server with OpenAPI documentation
+- **Command-Line Interface**: Full-featured CLI for training, evaluation, and prediction
+- **Python SDK**: Clean, well-documented API for programmatic access
 - **Interactive Notebooks**: Jupyter notebooks for exploratory analysis
-- **Extensive Testing**: Comprehensive test suite with pytest
-- **CI/CD Pipeline**: Automated testing and quality checks with GitHub Actions
+
+### Production Features
+- **Docker Support**: Multi-stage Dockerfile with security best practices
+- **Docker Compose**: Complete stack with API, Prometheus, and Grafana
+- **Kubernetes Ready**: Full K8s manifests with HPA, ingress, and monitoring
+- **Monitoring**: Prometheus metrics and Grafana dashboards
+- **Health Checks**: Liveness and readiness probes
+- **Load Testing**: Locust-based performance testing
+- **CI/CD Pipeline**: Automated testing, linting, and security scanning
+
+### Code Quality
+- **Extensive Testing**: Comprehensive test suite with >80% coverage
+- **Pre-commit Hooks**: Automated code quality checks
+- **Type Hints**: Full type annotation support
+- **Documentation**: Complete API documentation and deployment guides
+- **Security**: Bandit security scanning, dependency checks
 
 ## Table of Contents
 
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Usage](#usage)
+  - [REST API](#rest-api)
   - [Command-Line Interface](#command-line-interface)
   - [Python API](#python-api)
   - [Jupyter Notebooks](#jupyter-notebooks)
+- [Production Deployment](#production-deployment)
+  - [Docker](#docker)
+  - [Docker Compose](#docker-compose)
+  - [Kubernetes](#kubernetes)
 - [Project Structure](#project-structure)
 - [Available Models](#available-models)
 - [Examples](#examples)
+- [Monitoring](#monitoring)
+- [Performance](#performance)
 - [Development](#development)
 - [Testing](#testing)
 - [Contributing](#contributing)
@@ -74,6 +100,35 @@ This will run a complete analysis including:
 - Comparing model performance
 - Detailed evaluation of the best model
 - Sample predictions
+
+### Using the REST API
+
+```bash
+# Start the API server
+make api
+# or
+uvicorn iris_classifier.api:app --reload
+
+# API will be available at http://localhost:8000
+# Interactive docs at http://localhost:8000/docs
+```
+
+Make predictions via HTTP:
+
+```bash
+curl -X POST "http://localhost:8000/predict" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sample": {
+      "sepal_length": 5.1,
+      "sepal_width": 3.5,
+      "petal_length": 1.4,
+      "petal_width": 0.2
+    },
+    "model_name": "random_forest",
+    "include_probabilities": true
+  }'
+```
 
 ### Using the CLI
 
@@ -268,6 +323,67 @@ To run notebooks:
 jupyter notebook notebooks/
 ```
 
+## Production Deployment
+
+### Docker
+
+Build and run with Docker:
+
+```bash
+# Build image
+make docker-build
+
+# Run container
+make docker-run
+```
+
+Or manually:
+
+```bash
+docker build -t iris-classifier:latest .
+docker run -d -p 8000:8000 --name iris-api iris-classifier:latest
+```
+
+Access the API at http://localhost:8000
+
+### Docker Compose
+
+Run the complete stack with monitoring:
+
+```bash
+make docker-compose-up
+```
+
+This starts:
+- **API Server** → http://localhost:8000
+- **API Documentation** → http://localhost:8000/docs
+- **Prometheus** → http://localhost:9090
+- **Grafana** → http://localhost:3000 (admin/admin)
+
+### Kubernetes
+
+Deploy to Kubernetes cluster:
+
+```bash
+# Apply all configurations
+kubectl apply -f k8s/ -n iris-classifier
+
+# Check status
+kubectl get pods -n iris-classifier
+kubectl get svc -n iris-classifier
+```
+
+Features:
+- Horizontal Pod Autoscaling (2-10 replicas)
+- Health checks and readiness probes
+- Resource limits and requests
+- Ingress configuration
+- ConfigMaps and Secrets management
+
+**Detailed deployment guide:** See [DEPLOYMENT.md](DEPLOYMENT.md)
+
+**API documentation:** See [API.md](API.md)
+
 ## Project Structure
 
 ```
@@ -392,6 +508,84 @@ print(f"Predicted species: {loader.target_names[prediction]}")
 for name, prob in zip(loader.target_names, probabilities):
     print(f"  {name}: {prob:.2%}")
 ```
+
+## Monitoring
+
+### Prometheus Metrics
+
+The API exposes metrics at `/metrics`:
+
+```bash
+# View metrics
+curl http://localhost:8000/metrics
+```
+
+Key metrics:
+- `iris_predictions_total`: Total number of predictions
+- `iris_prediction_duration_seconds`: Prediction latency histogram
+- `iris_errors_total`: Error count by type
+
+### Grafana Dashboards
+
+Access Grafana at http://localhost:3000 (when using Docker Compose):
+
+1. Login with admin/admin
+2. Prometheus datasource is pre-configured
+3. Import dashboards from `monitoring/grafana/dashboards/`
+
+### Health Checks
+
+```bash
+# Check API health
+curl http://localhost:8000/health
+
+# Response
+{
+  "status": "healthy",
+  "version": "2.0.0",
+  "models_loaded": 3,
+  "uptime_seconds": 3600.5
+}
+```
+
+## Performance
+
+### Benchmarking
+
+Run performance benchmarks:
+
+```bash
+make benchmark
+# or
+python scripts/benchmark.py
+```
+
+Results include:
+- Training time per model
+- Prediction latency (avg, std, percentiles)
+- Memory usage
+- Throughput (predictions/second)
+- Accuracy metrics
+
+### Load Testing
+
+Run load tests with Locust:
+
+```bash
+make load-test
+# or
+locust -f tests/load_test.py --host=http://localhost:8000
+```
+
+Access Locust UI at http://localhost:8089
+
+### Expected Performance
+
+With default configuration (4 workers):
+- **Single prediction latency**: 1-5ms
+- **Throughput**: 200-500 req/s
+- **Batch (100 samples)**: 50-100ms
+- **Memory per worker**: ~250MB
 
 ## Development
 

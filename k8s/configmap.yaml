@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: iris-classifier-config
+  labels:
+    app: iris-classifier
+data:
+  APP_NAME: "iris-classifier"
+  APP_VERSION: "2.0.0"
+  API_HOST: "0.0.0.0"
+  API_PORT: "8000"
+  LOG_LEVEL: "INFO"
+  DEFAULT_MODEL: "random_forest"
+  MODEL_PATH: "/app/models/"
+  PROMETHEUS_ENABLED: "true"
+  RATE_LIMIT_ENABLED: "true"
+  RATE_LIMIT_CALLS: "100"
+  RATE_LIMIT_PERIOD: "60"
+  BATCH_PREDICTION_ENABLED: "true"
+  MAX_BATCH_SIZE: "1000"
